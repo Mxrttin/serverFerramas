@@ -10,6 +10,7 @@ const categoriasRoutes = require('./routes/categorias.routes')
 const direccionController = require('./routes/direccion.routes')
 const carritoController = require('./routes/carrito.routes')
 
+
 require('dotenv').config();
 
 app.use(cors());
@@ -20,6 +21,7 @@ app.use('/api/pedidos', pedidosRoutes);
 app.use('/api/categorias', categoriasRoutes);
 app.use('/api/direccion',direccionController);
 app.use('/api/carrito',carritoController);
+
 
 
 // Iniciar el servidor

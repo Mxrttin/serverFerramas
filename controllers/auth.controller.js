@@ -32,7 +32,7 @@ exports.login = async (req, res) => {
                 rol: usuario.rol
             };
 
-            const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
+            const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
 
             console.log(`Usuario conectado: ${usuario.correo}`)
 
@@ -45,7 +45,7 @@ exports.login = async (req, res) => {
 };
 
 exports.registrarUsuario = async (req, res) => {
-  const { rut, nombre, correo, telefono, clave } = req.body;
+  const { rut, nombre,apellido, correo, telefono, clave } = req.body;
 
   console.log("Insertando nuevo usuario:", req.body);
 
@@ -54,11 +54,11 @@ exports.registrarUsuario = async (req, res) => {
     const hashedPassword = await bcrypt.hash(clave, salt);
 
     const sql = `
-      INSERT INTO usuarios (rut, nombre, correo, telefono, clave, rol)
+      INSERT INTO usuarios (rut, nombre,apellido, correo, telefono, clave, rol)
       VALUES (?, ?, ?, ?, ?, 2)
     `;
 
-    db.query(sql, [rut, nombre, correo, telefono, hashedPassword], (err, result) => {
+    db.query(sql, [rut, nombre,apellido, correo, telefono, hashedPassword], (err, result) => {
       if (err) {
         console.error("Error en la consulta SQL:", err);
         return res.status(500).json({ success: false, message: "Error al registrar usuario" });

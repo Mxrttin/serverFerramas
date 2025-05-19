@@ -1,7 +1,7 @@
 const db = require('../db');
 
 exports.obtenerPedidosPorUsuario = (req, res) => {
-    const rutUsuario = req.params.rutUsuario;
+    const idUsuario = req.params.idUsuario;
     
     const sql = `
         SELECT 
@@ -12,12 +12,12 @@ exports.obtenerPedidosPorUsuario = (req, res) => {
         FROM 
             pedido p
         WHERE 
-            p.rut_usuario = ?
+            p.id_usuario = ?
         ORDER BY 
             p.fecha_pedido DESC
     `;
 
-    db.query(sql, [rutUsuario], (err, results) => {
+    db.query(sql, [idUsuario], (err, results) => {
         if (err) {
             console.error("Error en la consulta SQL:", err.message);
             return res.status(500).json({error: "Error del servidor"});

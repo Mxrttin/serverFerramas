@@ -198,9 +198,106 @@ const eliminarDelCarrito = (req,res) => {
 }
 
 
+const pagar = (req, res) => {
+    const { id_usuario, total } = req.body;
+
+    const insertarPedido = `
+        INSERT INTO pedido (id_usuario, total, estado)
+        VALUES (?, ?, 'Pendiente')
+    `;
+
+    db.query(insertarPedido, [id_usuario, total], (err, result) => {
+        if (err) {
+            console.error("Error al crear pedido:", err);
+            return res.status(500).json({
+                success: false,
+                message: "Error del servidor al crear el pedido"
+            });
+        }
+
+        const idPedido = result.insertId;
+
+        const obtenerCarrito = `
+            SELECT c.id_producto, c.cantidad, (c.cantidad * p.precio) AS subtotal
+            FROM carrito c
+            JOIN productos p ON c.id_producto = p.id_producto
+            WHERE c.id_usuario = ?
+        `;
+
+        db.query(obtenerCarrito, [id_usuario], (err2, productos) => {
+            if (err2) {
+                console.error("Error al obtener productos del carrito:", err2);
+                return res.status(500).json({
+                    success: false,
+                    message: "Pedido creado, pero error al obtener productos del carrito"
+                });
+            }
+
+            if (productos.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "El carrito está vacío"
+                });
+            }
+
+            const detalles = productos.map(p => [
+                idPedido,
+                p.id_producto,
+                p.cantidad,
+                p.subtotal
+            ]);
+
+            const insertarDetalles = `
+                INSERT INTO detalle_pedido (id_pedido, id_producto, cantidad, subtotal)
+                VALUES ?
+            `;
+
+            db.query(insertarDetalles, [detalles], (err3) => {
+                if (err3) {
+                    console.error("Error al insertar detalles:", err3);
+                    return res.status(500).json({
+                        success: false,
+                        message: "Pedido creado, pero error al guardar los detalles"
+                    });
+                }
+
+                const actualizarStock = `
+                    UPDATE productos
+                    SET cantidad = cantidad - ?
+                    WHERE id_producto = ?
+                `;
+
+                productos.forEach((p) => {
+                    db.query(actualizarStock, [p.cantidad, p.id_producto], (err4) => {
+                        if (err4) {
+                            console.error(`Error al actualizar stock del producto ${p.id_producto}:`, err4);
+                        }
+                    });
+                });
+
+                const vaciarCarrito = `DELETE FROM carrito WHERE id_usuario = ?`;
+                db.query(vaciarCarrito, [id_usuario], (err5) => {
+                    if (err5) {
+                        console.error("Error al vaciar carrito:", err5);
+                    }
+                });
+
+                return res.status(201).json({
+                    success: true,
+                    message: "Pedido y detalles registrados con éxito",
+                    id_pedido: idPedido
+                });
+            });
+        });
+    });
+};
+
+
+
 module.exports = {
     agregar,
     carritoUsuario,
-    eliminarDelCarrito
+    eliminarDelCarrito,
+    pagar
 
 }
