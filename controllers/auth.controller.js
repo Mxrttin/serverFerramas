@@ -1,5 +1,6 @@
 const db = require('../db');
 const bcrypt = require('bcrypt');
+const { response } = require('express');
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'tu_secreto_aqui';
@@ -47,15 +48,46 @@ exports.login = async (req, res) => {
 exports.registrarUsuario = async (req, res) => {
   const { rut, nombre,apellido, correo, telefono, clave } = req.body;
 
-  console.log("Insertando nuevo usuario:", req.body);
+  const verificarCorreo = async(correo) =>{
+    return new Promise((resolve, reject) =>{
+      const sql = `SELECT * FROM usuarios WHERE correo = ?`;
+      db.query(sql, [correo], (err, result) =>{
+        if(err) return reject(err);
+        resolve(result.length > 0)
+      })
+    })
+
+  }
+
+  const verificarRut = async (req,res) =>{
+    return new Promise((resolve, reject) =>{
+      const sql = `SELECT * FROM usuarios WHERE rut = ?`;
+      db.query(sql, [rut], (err, result) =>{
+        if(err) return reject(err);
+        resolve(result.length > 0)
+      })
+    })
+  }
 
   try {
+
+    const existeCorreo = await verificarCorreo(correo)
+    const existeRut = await verificarRut(rut)
+
+    if(existeRut){
+      return res.status(400).json({ success: false, message: "El rut ya está registrado" });
+    }
+
+    if(existeCorreo){
+      return res.status(400).json({ success: false, message: "El correo ya está registrado" });
+    }
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(clave, salt);
 
     const sql = `
       INSERT INTO usuarios (rut, nombre,apellido, correo, telefono, clave, rol)
-      VALUES (?, ?, ?, ?, ?, 2)
+      VALUES (?, ?, ?, ?, ?,?, 2)
     `;
 
     db.query(sql, [rut, nombre,apellido, correo, telefono, hashedPassword], (err, result) => {
