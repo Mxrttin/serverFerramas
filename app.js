@@ -8,7 +8,7 @@ const pedidosRoutes = require('./routes/pedidos.routes');
 const categoriasRoutes = require('./routes/categorias.routes')
 const direccionController = require('./routes/direccion.routes')
 const carritoController = require('./routes/carrito.routes')
-
+const transbankRoutes = require('./routes/transbank.routes')
 
 require('dotenv').config();
 
@@ -20,8 +20,7 @@ app.use('/api/pedidos', pedidosRoutes);
 app.use('/api/categorias', categoriasRoutes);
 app.use('/api/direccion',direccionController);
 app.use('/api/carrito',carritoController);
-
-
+app.use('/api/transbank', transbankRoutes);
 
 // Iniciar el servidor
 app.listen(3000, () => {
